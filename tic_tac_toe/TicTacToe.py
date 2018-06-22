@@ -78,7 +78,5 @@ class TicTacToeNode(TreeNode):
             return 1
         elif self.defeat(player):
             return -1
-        elif self.is_filled():
-            return .1
         else:
             return 0

@@ -117,7 +117,7 @@ class MonteCarloTree:
         exploit_term = edge.value / (1 + edge.visit_count)
         parent_edge = edge.parent.parent_edge
         parent_visit_count = 0 if parent_edge is None else parent_edge.visit_count
-        explore_term = c * edge.prior * np.sqrt(parent_visit_count) / (1 + edge.visit_count)
+        explore_term = c * edge.prior * (np.log(2) + np.log(1 + parent_visit_count) - np.log(1 + edge.visit_count))
         return exploit_term + explore_term
 
     def pretty_print(self):

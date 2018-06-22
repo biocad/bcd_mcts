@@ -12,7 +12,7 @@ class OptimalPlayer(TicTacToePlayer):
         super().__init__()
         self.policy_dict = dict()
 
-        with open("policy.dat", "r") as f:
+        with open("data/policy.dat", "r") as f:
             _ = f.readline()
             for line in f:
                 self.policy_dict[line.split("\t")[0]] = float(line.split("\t")[1])
