@@ -1,8 +1,7 @@
 from copy import copy
 import numpy as np
-import pandas as pd
 
-from mcts.MCTS import TreeNode
+from mcts.MCTS import TreeNode, TreeEdge
 
 turn_seq_dict = {"TIC": "TAC", "TAC": "TIC"}  # Sequence of moves
 tic_num_dict = {"TIC": 1, "TAC": 2, "FREE": 0}  # Signs of players in the field
@@ -10,6 +9,14 @@ TIC = tic_num_dict["TIC"]
 TAC = tic_num_dict["TAC"]
 FREE = tic_num_dict["FREE"]
 tic_char_dict = {TIC: "x", TAC: "o", FREE: " "}  # Signs of players used in pretty printing
+
+
+class TicTacToeEdge(TreeEdge):
+    def update(self, reward):
+        self.value += reward
+        self.visit_count += 1
+        if self.parent.parent_edge is not None:
+            self.parent.parent_edge.update(-reward)
 
 
 class TicTacToeNode(TreeNode):
@@ -26,6 +33,7 @@ class TicTacToeNode(TreeNode):
         assert self.field.shape[0] == self.field.shape[0], "Field must have square shape"
         self.field_size = self.field.shape[0]
         self.node_turn = kwargs["node_turn"]
+        self.edge_class = TicTacToeEdge
 
     def get_available_child_nodes(self):
         result = []
@@ -60,8 +68,8 @@ class TicTacToeNode(TreeNode):
     def victory(self, player):
         assert player in ["TIC", "TAC"]
         rows, columns = np.where(self.field == tic_num_dict[player])
-        row_victory = (pd.Series(rows).value_counts() == self.field_size).any()
-        col_victory = (pd.Series(columns).value_counts() == self.field_size).any()
+        row_victory = any([(rows == i).sum() == self.field_size for i in range(self.field_size)])
+        col_victory = any([(columns == i).sum() == self.field_size for i in range(self.field_size)])
         main_diagonal = np.sum([r == c for r, c in zip(rows, columns)]) == self.field_size
         side_diagonal = np.sum([(r + c) == (self.field_size - 1) for r, c in zip(rows, columns)]) == self.field_size
         return any([row_victory, col_victory, main_diagonal, side_diagonal])
@@ -69,14 +77,10 @@ class TicTacToeNode(TreeNode):
     def defeat(self, player):
         return self.victory(turn_seq_dict[player])
 
-    def get_reward(self, **kwargs):
-        assert "player" in kwargs
-        player = kwargs["player"]
-        assert player in ["TIC", "TAC"]
-
-        if self.victory(player):
-            return 1
-        elif self.defeat(player):
-            return -1
-        else:
-            return 0
+    def get_reward(self):
+        """
+        The last turn in a game could either be 'victory' or 'tie'
+        You could never make a turn, immediately leading you to defeat
+        :return: 1 if 'victory' 0 otherwise
+        """
+        return 1 if self.defeat(self.node_turn) else 0

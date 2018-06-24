@@ -9,20 +9,19 @@ if __name__ == "__main__":
     monte_carlo_player = MCTSPlayer(node_turn="TIC")
     random_player = RandomPlayer()
 
-    monte_carlo_player.fit(optimal_player)
+    monte_carlo_player.fit()
 
     game_root = TicTacToeNode(None, field=np.zeros((SIZE, SIZE)), node_turn="TIC")
     cur_node = game_root
 
-    players = [monte_carlo_player, human_player][::1]
+    players = [monte_carlo_player, human_player]
     player_strings = ["TIC", "TAC"]
-    print(cur_node.pretty_print())
     turn_i = 0
 
     while True:
         cur_node = players[turn_i % 2].turn(cur_node)
         print(cur_node.pretty_print())
-        if cur_node.get_reward(player=player_strings[turn_i % 2]) != 0:
+        if cur_node.get_reward() != 0 or (cur_node.field != 0).mean() == 1:
             print("Game over.")
             break
         turn_i += 1

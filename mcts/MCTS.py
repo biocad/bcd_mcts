@@ -1,5 +1,5 @@
 from abc import ABC, abstractmethod
-from copy import deepcopy
+from copy import copy
 import numpy as np
 
 
@@ -17,6 +17,7 @@ class TreeEdge:
         self.parent = parent
         self.child = child
 
+    @abstractmethod
     def update(self, reward):
         """
         Traverse the tree up to the root so as to update value and visit count
@@ -43,6 +44,7 @@ class TreeNode(ABC):
         """
         self.parent_edge = parent_edge
         self.children = []
+        self.edge_class = TreeEdge
 
     @abstractmethod
     def __eq__(self, other):
@@ -66,7 +68,7 @@ class TreeNode(ABC):
 
         available_children = self.get_available_child_nodes()
         for new_node, new_prior in available_children:
-            new_edge = TreeEdge(new_prior, self, new_node)
+            new_edge = self.edge_class(new_prior, self, new_node)
             new_node.parent_edge = new_edge
             self.children.append(new_edge)
 
@@ -143,20 +145,18 @@ class MonteCarloTree:
         action.child.children = []
         return action.child
 
-    def fit(self, opponent, num_iter=1000):
+    def fit(self, num_iter=10000):
         """
         Train a Monte-Carlo Tree Search player
-        :param opponent: Something able to take TreeNode and return new TreeNode using .turn() method
         :param num_iter: number of games to play while training
         :return: None
         """
         for _ in range(num_iter):
-            self._fit(opponent)
+            self._fit()
 
-    def _fit(self, opponent):
+    def _fit(self):
         """
         Run a Monte-Carlo Tree Search simulation
-        :param opponent: Something able to take TreeNode and return new TreeNode using .turn() method
         :return: None
         """
         # Selection phase
@@ -169,36 +169,21 @@ class MonteCarloTree:
         # Termination condition
         if cur_node.is_finish():
             if cur_node.parent_edge is not None:
-                cur_node.parent_edge.update(cur_node.get_reward(player=cur_node.node_turn))
+                cur_node.parent_edge.update(cur_node.get_reward())
             return
 
-        sel_node = cur_node
         # Expansion
         cur_node.expand()
-        for child_edge in cur_node.children:
-            child_node = child_edge.child
-            if not child_node.is_finish():
-                grand_child_node = opponent.turn(child_node)
-                child_node.children = [TreeEdge(1, child_node, grand_child_node)]
 
         # Roll-out
         sel_action = np.random.choice([c for c in cur_node.children])
         cur_node = sel_action.child
-        roll_out_node = deepcopy(cur_node)
 
-        first_turn = True
-        opponent_turn = True
+        roll_out_node = copy(cur_node)
+
         while not roll_out_node.is_finish():
-            if not opponent_turn:
-                roll_out_node.expand()
-                action = np.random.choice(roll_out_node.children)
-                roll_out_node = action.child
-            else:
-                if first_turn:
-                    first_turn = False
-                    roll_out_node = roll_out_node.children[0].child
-                else:
-                    roll_out_node = opponent.turn(roll_out_node)
-            opponent_turn = not opponent_turn
+            roll_out_node.expand()
+            action = np.random.choice(roll_out_node.children)
+            roll_out_node = action.child
 
-        sel_action.update(roll_out_node.get_reward(player=sel_node.node_turn))
+        roll_out_node.parent_edge.update(roll_out_node.get_reward())
