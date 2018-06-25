@@ -6,7 +6,7 @@ SIZE = 3
 if __name__ == "__main__":
     optimal_player = OptimalPlayer()
     human_player = HumanPlayer()
-    monte_carlo_player = MCTSPlayer(node_turn="TIC")
+    monte_carlo_player = MCTSPlayer(node_turn="TIC", size=SIZE)
     random_player = RandomPlayer()
 
     monte_carlo_player.fit()

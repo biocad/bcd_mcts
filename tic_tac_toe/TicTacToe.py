@@ -21,7 +21,7 @@ class TicTacToeEdge(TreeEdge):
 
 class TicTacToeNode(TreeNode):
     """
-    Implementation of Monte-Carlo Tree Node related to Tic-Tac Toe tic_tac_toe.
+    Implementation of Monte-Carlo Tree Node related to Tic-Tac Toe game.
     """
     def __init__(self, parent_edge, **kwargs):
         super().__init__(parent_edge)
@@ -57,7 +57,7 @@ class TicTacToeNode(TreeNode):
         row_strings = []
         for row in self.field:
             row_strings.append(" | ".join([tic_char_dict[el] for el in row]))
-        return "\n---------\n".join(row_strings)
+        return "\n{}\n".format("---" * self.field.shape[0]).join(row_strings)
 
     def expand(self):
         super().expand()

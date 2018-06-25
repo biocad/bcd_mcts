@@ -11,15 +11,15 @@ class MCTSPlayer(TicTacToePlayer):
         assert "node_turn" in kwargs, "You need to provide either `TIC` or `TAC` into the constructor"
 
         node_turn = kwargs["node_turn"]
-        tree = kwargs.get("tree", None)
+        root_path = kwargs.get("root", None)
         self.size = kwargs.get("size", 3)
-        if tree is None:
+        if root_path is None:
             root_node = TicTacToeNode(None,
                                       field=np.zeros((self.size, self.size)),
                                       node_turn=node_turn)
             self.tree = MonteCarloTree(root_node)
         else:
-            self.tree = tree
+            self.tree = MonteCarloTree(root_path)
 
     def fit(self):
         self.tree.fit()

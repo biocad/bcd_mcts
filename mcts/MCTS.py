@@ -1,5 +1,6 @@
 from abc import ABC, abstractmethod
 from copy import copy
+import _pickle
 import numpy as np
 
 
@@ -104,9 +105,14 @@ class MonteCarloTree:
     def __init__(self, root):
         """
         The class represents all information about a Monte-Carlo Tree, allows traversals and storage of `tactics`
-        :param root: TreeNode
+        :param root: TreeNode or path to _pickle serialized root
         """
-        self.root = root
+        if isinstance(root, str):
+            self.root = _pickle.load(open(root, "rb"))
+        elif isinstance(root, TreeNode):
+            self.root = root
+        else:
+            assert False, "root must be either TreeNode or path to file"
 
     @staticmethod
     def edge_criteria(edge, c=.3):
@@ -145,7 +151,7 @@ class MonteCarloTree:
         action.child.children = []
         return action.child
 
-    def fit(self, num_iter=10000):
+    def fit(self, num_iter=100000):
         """
         Train a Monte-Carlo Tree Search player
         :param num_iter: number of games to play while training
@@ -153,6 +159,7 @@ class MonteCarloTree:
         """
         for _ in range(num_iter):
             self._fit()
+        _pickle.dump(self.root, open("./data/root.pkl", "wb"))
 
     def _fit(self):
         """
